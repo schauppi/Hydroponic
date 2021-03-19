@@ -29,7 +29,8 @@ def on_connect(client, userdata, flags, rc):
         print("Bad connection Returned code=",rc)
 
 
-broker_address="broker.mqttdashboard.com"
+#broker_address="broker.mqttdashboard.com"
+broker_address = "192.168.8.189"
 
 client = mqtt.Client("Client2")
 
@@ -44,6 +45,12 @@ client.subscribe("hydro/rel/off")
 client.subscribe("hydro/rel/on")
 
 while True:
+	
+	#check GPIO3
+	if GPIO.input(GPIO_3) == True:
+		client.publish("hydro/rel/status", "1")
+	else:
+		client.publish("hydro/rel/status", "0")
 	
 	Hum1, Temp1 = Adafruit_DHT.read_retry(DHTSensor_1, GPIO_1)
 	Hum2, Temp2 = Adafruit_DHT.read_retry(DHTSensor_2, GPIO_2)
