@@ -1,6 +1,6 @@
 from AtlasI2C import (AtlasI2C)
 import time
-
+#needed for PH and EC
 def get_devices():
     device = AtlasI2C()
     device_address_list = device.list_i2c_devices()
@@ -12,27 +12,21 @@ def get_devices():
 		response = device.query("name,?").split(",")[1]
 		device_list.append(AtlasI2C(address = i, moduletype = moduletype, name = response))
     return device_list 
-    
-device_list = get_devices()
-device = device_list
 
-#ph 0x63 / 99
-#ec 0x64 / 100
-
-while True:
+def measure(device_list):
 	for dev in device_list:
 		dev.write("R")
-	time.sleep(3)
+		time.sleep(3)
 	dev_count = 0
 	for dev in device_list:
 		if dev_count == 0:
 			ph = dev.read()
 			ph = ph
 			ph = (float(ph))
-			print(ph)
 		else:
 			ec = dev.read()
 			ec = ec
 			ec = (float(ec))
-			print(ec)
 		dev_count += 1
+		
+	return ph, ec
