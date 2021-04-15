@@ -30,5 +30,5 @@ while True:
 	#publish the values on topics
 	client.publish("hydro/ph", ph)
 	client.publish("hydro/ec", ec)
-	time.sleep(300)
+	time.sleep(60)
 	
