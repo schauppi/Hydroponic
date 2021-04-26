@@ -29,6 +29,15 @@ GPIO.setup(RELAIS_dosing_pump_3, GPIO.OUT) # GPIO Modus zuweisen
 GPIO.setup(RELAIS_dosing_pump_2, GPIO.OUT) # GPIO Modus zuweisen
 GPIO.setup(RELAIS_dosing_pump_1, GPIO.OUT) # GPIO Modus zuweisen
 
+#init when program opens
+GPIO.output(RELAIS_lamp, True)
+GPIO.output(RELAIS_water_pump, True)
+GPIO.output(RELAIS_air_pump, True)
+
+GPIO.output(RELAIS_dosing_pump_1, True)
+GPIO.output(RELAIS_dosing_pump_2, True)
+GPIO.output(RELAIS_dosing_pump_3, True)
+GPIO.output(RELAIS_dosing_pump_4, True)
 
 def on_connect(client, userdata, flags, rc):
 	if rc==0:
