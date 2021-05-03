@@ -4,6 +4,8 @@ import ph_ec_helper
 import paho.mqtt.client as mqtt
 import time
 import RPi.GPIO as GPIO
+import ultrasonic_helper
+import dht11_helper
 
 #get i2c devices from ph_ec_helper module
 #ph 0x63 / 99 i2c
@@ -112,9 +114,14 @@ client.subscribe("hydro/dosing_pump_4/off")
 while True:
 	#measure ph and ec from ph_ec_helper module
 	ph, ec = ph_ec_helper.measure(device_list)
+	water_level = ultrasonic_helper.distance()
+	humidity, temperature = dht11_helper.measure()
 	
 	#publish the values on topics
 	client.publish("hydro/ph", ph)
 	client.publish("hydro/ec", ec)
+	client.publish("hydro/water_level", water_level)
+	client.publish("hydro/temperature", temperature)
+	client.publish("hydro/humidity", humidity)
 	time.sleep(60)
 	
