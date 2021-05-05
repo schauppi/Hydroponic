@@ -18,6 +18,8 @@ RELAIS_lamp = 24 #Lampe
 RELAIS_water_pump = 18 #Wasserpumpe
 RELAIS_air_pump = 23 #Luftpumpe
 
+button_lamp = 6 #Button Lampe
+
 RELAIS_dosing_pump_4 = 21 #Dosierpumpe4(innen)
 RELAIS_dosing_pump_3 = 20 #Dosierpumpe3
 RELAIS_dosing_pump_2 = 26 #Dosierpumpe2
@@ -41,6 +43,37 @@ GPIO.output(RELAIS_dosing_pump_2, True)
 GPIO.output(RELAIS_dosing_pump_3, True)
 GPIO.output(RELAIS_dosing_pump_4, True)
 
+#setup buttons
+GPIO.setup(button_lamp, GPIO.IN, GPIO.PUD_UP)
+
+if GPIO.input(RELAIS_lamp) == 1:
+	state_lamp = 1
+else:
+	state_lamp = 0
+	
+def button_lamp_state(state):
+	if state == 1:
+		state_lamp = 0
+		global state_lamp
+	elif state == 0:
+		state_lamp = 1
+		global state_lamp
+		
+#Callback togglen
+def button_lamp_callback(channel):
+	if state_lamp == 1:
+		client.publish("hydro/lamp/button/off")
+		button_lamp_state(1)
+		time.sleep(0.01)
+	elif state_lamp == 0:
+		client.publish("hydro/lamp/button/on")
+		button_lamp_state(0)
+		time.sleep(0.01)
+	else:
+		pass
+	
+GPIO.add_event_detect(button_lamp, GPIO.RISING, callback=button_lamp_callback, bouncetime = 250)
+
 def on_connect(client, userdata, flags, rc):
 	if rc==0:
 		print("connection ok", rc)
@@ -52,10 +85,25 @@ def on_message(client, userdata, message):
 	
 	#lamp, air/water pump
 	if message.topic == "hydro/lamp/on":
-		GPIO.output(RELAIS_lamp, True)
+		if state_lamp == 1:
+			pass
+		elif state_lamp == 0:
+			GPIO.output(RELAIS_lamp, True)
+			button_lamp_state(1)
 	elif message.topic == "hydro/lamp/off":
+		if state_lamp == 0:
+			pass
+		elif state_lamp == 1:
+			GPIO.output(RELAIS_lamp, False)
+			button_lamp_state(1)
+	
+	if message.topic == "hydro/lamp/hardware_button/on":
+		GPIO.output(RELAIS_lamp, True)
+		print(state_lamp)
+	elif message.topic == "hydro/lamp/hardware_button/off":
 		GPIO.output(RELAIS_lamp, False)
-		
+		print(state_lamp)
+
 	if message.topic == "hydro/water_pump/on":
 		GPIO.output(RELAIS_water_pump, True)
 	elif message.topic == "hydro/water_pump/off":
@@ -65,6 +113,7 @@ def on_message(client, userdata, message):
 		GPIO.output(RELAIS_air_pump, True)
 	elif message.topic == "hydro/air_pump/off":
 		GPIO.output(RELAIS_air_pump, False)
+	
 		
 	#dosing pumps
 	if message.topic == "hydro/dosing_pump_1/on":
@@ -98,6 +147,8 @@ client.loop_start()
 #topic subscriptions
 client.subscribe("hydro/lamp/on")
 client.subscribe("hydro/lamp/off")
+client.subscribe("hydro/lamp/hardware_button/on")
+client.subscribe("hydro/lamp/hardware_button/off")
 client.subscribe("hydro/water_pump/on")
 client.subscribe("hydro/water_pump/off")
 client.subscribe("hydro/air_pump/on")
@@ -123,5 +174,21 @@ while True:
 	client.publish("hydro/water_level", water_level)
 	client.publish("hydro/temperature", temperature)
 	client.publish("hydro/humidity", humidity)
+	
+	if GPIO.input(RELAIS_lamp) == 1:
+		client.publish("hydro/lamp_status", 1)
+	else:
+		client.publish("hydro/lamp_status", 0)
+	
+	if GPIO.input(RELAIS_air_pump) == 1:
+		client.publish("hydro/air_pump_status", 1)
+	else:
+		client.publish("hydro/air_pump_status", 0)
+		
+	if GPIO.input(RELAIS_water_pump) == 1:
+		client.publish("hydro/water_pump_status", 1)
+	else:
+		client.publish("hydro/water_pump_status", 0)
+		
 	time.sleep(60)
 	
