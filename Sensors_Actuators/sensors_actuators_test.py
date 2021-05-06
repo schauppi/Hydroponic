@@ -18,7 +18,7 @@ RELAIS_lamp = 24 #Lampe
 RELAIS_water_pump = 18 #Wasserpumpe
 RELAIS_air_pump = 23 #Luftpumpe
 
-button_lamp = 6 #Button Lampe
+button_lamp = 5 #Button Lampe
 
 RELAIS_dosing_pump_4 = 21 #Dosierpumpe4(innen)
 RELAIS_dosing_pump_3 = 20 #Dosierpumpe3
@@ -45,34 +45,18 @@ GPIO.output(RELAIS_dosing_pump_4, True)
 
 #setup buttons
 GPIO.setup(button_lamp, GPIO.IN, GPIO.PUD_UP)
-
-if GPIO.input(RELAIS_lamp) == 1:
-	state_lamp = 1
-else:
-	state_lamp = 0
-	
-def button_lamp_state(state):
-	if state == 1:
-		state_lamp = 0
-		global state_lamp
-	elif state == 0:
-		state_lamp = 1
-		global state_lamp
 		
 #Callback togglen
-def button_lamp_callback(channel):
-	if state_lamp == 1:
-		client.publish("hydro/lamp/button/off")
-		button_lamp_state(1)
-		time.sleep(0.01)
-	elif state_lamp == 0:
-		client.publish("hydro/lamp/button/on")
-		button_lamp_state(0)
-		time.sleep(0.01)
-	else:
-		pass
+def lamp_interrupt(channel):
+	print("pressed")
+	print(channel)
 	
-GPIO.add_event_detect(button_lamp, GPIO.RISING, callback=button_lamp_callback, bouncetime = 250)
+GPIO.add_event_detect(button_lamp, GPIO.RISING, callback=lamp_interrupt, bouncetime = 250)
+
+GPIO.remove_event_detect(RELAIS_lamp)
+GPIO.remove_event_detect(RELAIS_water_pump)
+GPIO.remove_event_detect(RELAIS_air_pump)
+
 
 def on_connect(client, userdata, flags, rc):
 	if rc==0:
@@ -80,41 +64,20 @@ def on_connect(client, userdata, flags, rc):
 	else:
 		print("connection error", rc)
 
-def topic_lamp(topic):
-	if topic == "hydro/lamp/on":
-		if state_lamp == 1:
-			pass
-		elif state_lamp == 0:
-			GPIO.output(RELAIS_lamp, True)
-			button_lamp_state(1)
-	elif topic == "hydro/lamp/off":
-		if state_lamp == 0:
-			pass
-		elif state_lamp == 1:
-			GPIO.output(RELAIS_lamp, False)
-			button_lamp_state(1)
-	
-	elif topic == "hydro/lamp/hardware_button/on":
-		GPIO.output(RELAIS_lamp, True)
-		print(state_lamp)
-	elif topic == "hydro/lamp/hardware_button/off":
-		GPIO.output(RELAIS_lamp, False)
-		print(state_lamp)
-	else:
-		pass
-
 		
 def on_message(client, userdata, message):
 	print("message received " ,str(message.payload.decode("utf-8")))
 	topic = str(message.topic)
 	#message = str(message.payload.decode("utf-8"))
 	#print(len(message.payload))
-	print(topic)
+	#print(topic)
+	global topic
 
-	if len(message.payload) != 0 and topic.startswith("hydro/lamp/"):
-		topic_lamp(topic)
-	elif len(message.payload) == 0 and topic.startswith("hydro/lamp/hardware"):
-		topic_lamp(topic)
+	if message.topic == "hydro/lamp/on":
+		GPIO.output(RELAIS_lamp, True)
+	elif message.topic == "hydro/lamp/off":
+		GPIO.output(RELAIS_lamp, False)
+		
 	elif message.topic == "hydro/water_pump/on":
 		GPIO.output(RELAIS_water_pump, True)
 	elif message.topic == "hydro/water_pump/off":
