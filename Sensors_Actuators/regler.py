@@ -6,6 +6,7 @@ import time
 import RPi.GPIO as GPIO
 import ultrasonic_helper
 import dht11_helper
+from simple_pid import PID
 
 #get i2c devices from ph_ec_helper module
 #ph 0x63 / 99 i2c
@@ -33,23 +34,23 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, message):
 	print("message received " ,str(message.payload.decode("utf-8")))
-"""
+
 def button_lamp_callback(channel):
-	client.publish("hydro/lamp", "true")
+	client.publish("hydro/lamp/on")
 	print("lampe")
 	
 def button_water_pump_callback(channel):
-	client.publish("hydro/water_pump", "true")
+	client.publish("hydro/water_pump/on")
 	print("wasserpumpe")
 	
 def button_air_pump_callback(channel):
-	client.publish("hydro/air_pump", "true")
+	client.publish("hydro/air_pump/on")
 	print("luftpumpe")
 
 GPIO.add_event_detect(button_water_pump, GPIO.RISING, callback=button_water_pump_callback, bouncetime = 250)
 GPIO.add_event_detect(button_lamp, GPIO.RISING, callback=button_lamp_callback, bouncetime = 250)
 GPIO.add_event_detect(button_air_pump, GPIO.RISING, callback=button_air_pump_callback, bouncetime = 250)
-"""
+
 
 #Mqtt Standard procedure
 broker_address = "192.168.8.166"
@@ -59,9 +60,16 @@ client.on_message=on_message
 client.connect(broker_address)
 client.loop_start()
 
+#controller
+pid = PID(1, 0, 0, setpoint=7.5)
+
 while True:
 	#measure ph and ec from ph_ec_helper module
+	time_1 = time.time()
 	ph, ec = ph_ec_helper.measure(device_list)
+	print("PH: ", ph)
+	time_2 = time.time()
+	print("Elapsed: ", time_2 - time_1)
 	water_level = ultrasonic_helper.distance()
 	humidity, temperature = dht11_helper.measure()
 	
@@ -72,4 +80,6 @@ while True:
 	client.publish("hydro/temperature", temperature)
 	client.publish("hydro/humidity", humidity)
 	
-	time.sleep(60)
+	control = pid(ph)
+	print("control val: ", control)
+	
