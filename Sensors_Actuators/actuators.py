@@ -44,6 +44,92 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, message):
 	print("message received " ,str(message.payload.decode("utf-8")))
 
+	if message.topic == "hydro/lamp":
+		print("topic lamp")
+		if message.payload == "true":
+			GPIO.output(RELAIS_lamp, True)
+		elif message.payload == "false":
+			GPIO.output(RELAIS_lamp, False)
+		
+	elif message.topic == "hydro/water_pump":
+		print("topic water pump")
+		if message.payload == "true":
+			GPIO.output(RELAIS_water_pump, True)
+		elif message.payload == "false":
+			GPIO.output(RELAIS_water_pump, False)
+
+	elif message.topic == "hydro/air_pump":
+		print("topic air pump")
+		if message.payload == "true":
+			GPIO.output(RELAIS_air_pump, True)
+		elif message.payload == "false":
+			GPIO.output(RELAIS_air_pump, False)
+			
+	elif message.topic == "hydro/dosing_pump_1":
+		print("dosing pump 1")
+		if message.payload == "true":
+			GPIO.output(RELAIS_dosing_pump_1, False)
+		elif message.payload == "false":
+			GPIO.output(RELAIS_dosing_pump_1, True)
+			
+	elif message.topic == "hydro/dosing_pump_2":
+		print("dosing pump 2")
+		if message.payload == "true":
+			GPIO.output(RELAIS_dosing_pump_2, False)
+		elif message.payload == "false":
+			GPIO.output(RELAIS_dosing_pump_2, True)
+
+	elif message.topic == "hydro/dosing_pump_3":
+		print("dosing pump 3")
+		if message.payload == "true":
+			GPIO.output(RELAIS_dosing_pump_3, False)
+		elif message.payload == "false":
+			GPIO.output(RELAIS_dosing_pump_3, True)
+			
+	elif message.topic == "hydro/dosing_pump_4":
+		print("dosing pump 4")
+		if message.payload == "true":
+			GPIO.output(RELAIS_dosing_pump_4, False)
+		elif message.payload == "false":
+			GPIO.output(RELAIS_dosing_pump_4, True)
+			
+			
+#Mqtt Standard procedure
+broker_address = "192.168.8.166"
+client = mqtt.Client("Actuators")
+client.on_connect=on_connect
+client.on_message=on_message
+client.connect(broker_address)
+client.loop_start()
+
+client.subscribe("hydro/air_pump")
+client.subscribe("hydro/lamp")
+client.subscribe("hydro/water_pump")
+client.subscribe("hydro/dosing_pump_1")
+client.subscribe("hydro/dosing_pump_2")
+client.subscribe("hydro/dosing_pump_3")
+client.subscribe("hydro/dosing_pump_4")
+
+while True:
+	
+	if GPIO.input(RELAIS_lamp) == 1:
+		client.publish("hydro/lamp_status", 1)
+	else:
+		client.publish("hydro/lamp_status", 0)
+	
+	if GPIO.input(RELAIS_air_pump) == 1:
+		client.publish("hydro/air_pump_status", 1)
+	else:
+		client.publish("hydro/air_pump_status", 0)
+		
+	if GPIO.input(RELAIS_water_pump) == 1:
+		client.publish("hydro/water_pump_status", 1)
+	else:
+		client.publish("hydro/water_pump_status", 0)
+		
+	time.sleep(60)
+	
+"""
 	if message.topic == "hydro/lamp/on":
 		GPIO.output(RELAIS_lamp, True)
 	elif message.topic == "hydro/lamp/off":
@@ -80,20 +166,9 @@ def on_message(client, userdata, message):
 	elif message.topic == "hydro/dosing_pump_4/off":
 		GPIO.output(RELAIS_dosing_pump_4, True)
 		
-		
-#Mqtt Standard procedure
-broker_address = "192.168.8.166"
-client = mqtt.Client("Sensors_Actuators")
-client.on_connect=on_connect
-client.on_message=on_message
-client.connect(broker_address)
-client.loop_start()
-
 #topic subscriptions
 client.subscribe("hydro/lamp/on")
 client.subscribe("hydro/lamp/off")
-client.subscribe("hydro/lamp/hardware_button/on")
-client.subscribe("hydro/lamp/hardware_button/off")
 client.subscribe("hydro/water_pump/on")
 client.subscribe("hydro/water_pump/off")
 client.subscribe("hydro/air_pump/on")
@@ -106,22 +181,4 @@ client.subscribe("hydro/dosing_pump_3/on")
 client.subscribe("hydro/dosing_pump_3/off")
 client.subscribe("hydro/dosing_pump_4/on")
 client.subscribe("hydro/dosing_pump_4/off")
-
-while True:
-	
-	if GPIO.input(RELAIS_lamp) == 1:
-		client.publish("hydro/lamp_status", 1)
-	else:
-		client.publish("hydro/lamp_status", 0)
-	
-	if GPIO.input(RELAIS_air_pump) == 1:
-		client.publish("hydro/air_pump_status", 1)
-	else:
-		client.publish("hydro/air_pump_status", 0)
-		
-	if GPIO.input(RELAIS_water_pump) == 1:
-		client.publish("hydro/water_pump_status", 1)
-	else:
-		client.publish("hydro/water_pump_status", 0)
-		
-	time.sleep(60)
+"""
