@@ -40,3 +40,7 @@ def distanz():
  
     return distanz
     
+while True:
+    print(distanz())
+    time.sleep(0.01)
+    

@@ -3,6 +3,7 @@ import time
 import ph_ec_helper
 import paho.mqtt.client as mqtt
 import time
+import schedule
 import RPi.GPIO as GPIO
 import ultrasonic_helper
 import dht11_helper
@@ -136,6 +137,15 @@ client.subscribe("hydro/dosing_pump_3/off")
 client.subscribe("hydro/dosing_pump_4/on")
 client.subscribe("hydro/dosing_pump_4/off")
 
+
+def lamp_timer():
+	if GPIO.input(RELAIS_lamp) == 1:
+		client.publish("hydro/lamp/off")
+	else:
+		client.publish("hydro/lamp/on")
+		
+schedule.every(12).hours.do(lamp_timer)
+
 while True:
 	#measure ph and ec from ph_ec_helper module
 	ph, ec = ph_ec_helper.measure(device_list)
@@ -164,26 +174,7 @@ while True:
 	else:
 		client.publish("hydro/water_pump_status", 0)
 		
+	schedule.run_pending()
 	time.sleep(60)
 	
-"""
-#lamp, air/water pump
-if message.topic == "hydro/lamp/on":
-	if state_lamp == 1:
-		pass
-	elif state_lamp == 0:
-		GPIO.output(RELAIS_lamp, True)
-		button_lamp_state(1)
-elif message.topic == "hydro/lamp/off":
-	if state_lamp == 0:
-		pass
-	elif state_lamp == 1:
-		GPIO.output(RELAIS_lamp, False)
-		button_lamp_state(1)
 
-if message.topic == "hydro/lamp/hardware_button/on":
-	GPIO.output(RELAIS_lamp, True)
-	print(state_lamp)
-elif message.topic == "hydro/lamp/hardware_button/off":
-	GPIO.output(RELAIS_lamp, False)
-	print(state_lamp)"""
