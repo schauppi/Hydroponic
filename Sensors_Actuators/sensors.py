@@ -7,6 +7,9 @@ import RPi.GPIO as GPIO
 import ultrasonic_helper
 import dht11_helper
 
+time_global = 0
+time_global_after = 0
+
 #get i2c devices from ph_ec_helper module
 #ph 0x63 / 99 i2c
 #ec 0x64 / 100 i2c
@@ -33,26 +36,51 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, message):
 	print("message received " ,str(message.payload.decode("utf-8")))
-"""
+	
+
 def button_lamp_callback(channel):
-	client.publish("hydro/lamp", "true")
+	global time_global
+	global time_global_after
+	time_global = time.time()
+	if (time_global - time_global_after) > -0.1:
+		pass
+	else:
+		client.publish("hydro/lamp", "true")
+	time_global_after = time.time()
+	print(time_global - time_global_after)
 	print("lampe")
 	
 def button_water_pump_callback(channel):
-	client.publish("hydro/water_pump", "true")
+	global time_global
+	global time_global_after
+	time_global = time.time()
+	if (time_global - time_global_after) > -0.1:
+		pass
+	else:
+		client.publish("hydro/water_pump", "true")
+	time_global_after = time.time()
+	print(time_global - time_global_after)
 	print("wasserpumpe")
 	
 def button_air_pump_callback(channel):
-	client.publish("hydro/air_pump", "true")
+	global time_global
+	global time_global_after
+	time_global = time.time()
+	if (time_global - time_global_after) > -0.1:
+		pass
+	else:
+		client.publish("hydro/air_pump", "true")
+	time_global_after = time.time()
+	print(time_global - time_global_after)
 	print("luftpumpe")
 
 GPIO.add_event_detect(button_water_pump, GPIO.RISING, callback=button_water_pump_callback, bouncetime = 250)
 GPIO.add_event_detect(button_lamp, GPIO.RISING, callback=button_lamp_callback, bouncetime = 250)
 GPIO.add_event_detect(button_air_pump, GPIO.RISING, callback=button_air_pump_callback, bouncetime = 250)
-"""
+
 
 #Mqtt Standard procedure
-broker_address = "192.168.8.166"
+broker_address = "192.168.8.190"
 client = mqtt.Client("Sensors")
 client.on_connect=on_connect
 client.on_message=on_message
