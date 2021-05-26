@@ -6,6 +6,9 @@ import time
 import RPi.GPIO as GPIO
 import ultrasonic_helper
 import dht11_helper
+import webcam_helper
+import schedule
+from simple_pid import PID
 
 time_global = 0
 time_global_after = 0
@@ -37,7 +40,7 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, message):
 	print("message received " ,str(message.payload.decode("utf-8")))
 	
-
+"""
 def button_lamp_callback(channel):
 	global time_global
 	global time_global_after
@@ -77,7 +80,7 @@ def button_air_pump_callback(channel):
 GPIO.add_event_detect(button_water_pump, GPIO.RISING, callback=button_water_pump_callback, bouncetime = 250)
 GPIO.add_event_detect(button_lamp, GPIO.RISING, callback=button_lamp_callback, bouncetime = 250)
 GPIO.add_event_detect(button_air_pump, GPIO.RISING, callback=button_air_pump_callback, bouncetime = 250)
-
+"""
 
 #Mqtt Standard procedure
 broker_address = "192.168.8.190"
@@ -87,11 +90,51 @@ client.on_message=on_message
 client.connect(broker_address)
 client.loop_start()
 
+#controller
+pid = PID(1, 0, 0, setpoint=5.7)
+
+def controller():
+	control_value = pid(ph)
+	if control_value > 0.5:
+		print("ph value too low")
+		client.publish("hydro/ph/telegram", "PH value too low")
+		if control_value > 0.5 and control_value < 0.6:
+			client.publish("hydro/dosing_pump_2", True)
+			time.sleep(4)
+			client.publish("hydro/dosing_pump_2", False)
+		elif control_value > 0.6 and control_value < 0.9:
+			client.publish("hydro/dosing_pump_2", True)
+			time.sleep(11)
+			client.publish("hydro/dosing_pump_2", False)
+		elif control_value > 1:
+			client.publish("hydro/dosing_pump_2", True)
+			time.sleep(18)
+			client.publish("hydro/dosing_pump_2", False)
+	if control_value < -0.5:
+		print("ph value too high")
+		client.publish("hydro/ph/telegram", "PH value too high")
+		if control_value > -0.5 and control_value < -0.6:
+			client.publish("hydro/dosing_pump_1", True)
+			time.sleep(5)
+			client.publish("hydro/dosing_pump_1", False)
+		elif control_value > -0.6 and control_value < -0.9:
+			client.publish("hydro/dosing_pump_1", True)
+			time.sleep(16)
+			client.publish("hydro/dosing_pump_1", False)
+		elif control_value > -1:
+			client.publish("hydro/dosing_pump_1", True)
+			time.sleep(25)
+			client.publish("hydro/dosing_pump_1", False)
+	print(control_value)
+	
+schedule.every(45).minutes.do(controller)
+
 while True:
 	#measure ph and ec from ph_ec_helper module
 	ph, ec = ph_ec_helper.measure(device_list)
 	water_level = ultrasonic_helper.distance()
 	humidity, temperature = dht11_helper.measure()
+	webcam_image = webcam_helper.webcam()
 	
 	#publish the values on topics
 	client.publish("hydro/ph", ph)
@@ -100,4 +143,10 @@ while True:
 	client.publish("hydro/temperature", temperature)
 	client.publish("hydro/humidity", humidity)
 	
+	webcam_image=open("image.png", "rb") #3.7kiB in same folder
+	fileContent = webcam_image.read()
+	byteArr = bytearray(fileContent)
+	client.publish("hydro/webcam", byteArr)
+	
+	schedule.run_pending()
 	time.sleep(60)

@@ -72,7 +72,7 @@ def on_message(client, userdata, message):
 	#message = str(message.payload.decode("utf-8"))
 	#print(len(message.payload))
 	#print(topic)
-	global topic
+	#global topic
 
 	if message.topic == "hydro/lamp/on":
 		GPIO.output(RELAIS_lamp, True)
