@@ -48,15 +48,21 @@ client.loop_start()
 """
 pid = PID(1, 0.1, 0, setpoint=6)
 
-def controller():
+def controller(ph):
 	control_value = pid(ph)
 	print(control_value)
-	
+
+ph_list = [5.5, 5.0, 4.5, 4.0, 3.5, 3.0]
+
+for i in range(len(ph_list)):
+	ph = ph_list[i]
+	print(ph)
+	controller(ph)
 	
 		
 #schedule.every(12).hours.do(controller)
-schedule.every(5).minutes.do(controller)
-
+#schedule.every(5).minutes.do(controller)
+"""
 while True:
 	#measure ph and ec from ph_ec_helper module
 	time_1 = time.time()
@@ -68,14 +74,16 @@ while True:
 	water_level = ultrasonic_helper.distance()
 	humidity, temperature = dht11_helper.measure()
 	
-	"""
+	
 	#publish the values on topics
 	client.publish("hydro/ph", ph)
 	client.publish("hydro/ec", ec)
 	client.publish("hydro/water_level", water_level)
 	client.publish("hydro/temperature", temperature)
 	client.publish("hydro/humidity", humidity)
-	"""
-	schedule.run_pending()
+	
+	#schedule.run_pending()
+	controller()
 	time.sleep(60)
 	
+"""

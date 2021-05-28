@@ -9,6 +9,7 @@ import dht11_helper
 import webcam_helper
 import schedule
 from simple_pid import PID
+import fertilizer_helper
 
 time_global = 0
 time_global_after = 0
@@ -40,48 +41,24 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, message):
 	print("message received " ,str(message.payload.decode("utf-8")))
 	
-"""
-def button_lamp_callback(channel):
-	global time_global
-	global time_global_after
-	time_global = time.time()
-	if (time_global - time_global_after) > -0.1:
-		pass
+	if message.topic == "hydro/fertilize":
+		client.publish("hydro/fertilize/telegram", "Fertilizing...")
+		#water_level = ultrasonic_helper.distance()
+		#time_dosing_pump_3, time_dosing_pump_4 = fertilizer_helper.fertilize(water_level)
+		#fertilizer A
+		#client.publish("hydro/dosing_pump_3", "true")
+		#time.sleep(time_dosing_pump_3)
+		print("sleep")
+		#client.publish("hydro/dosing_pump_3", "false")
+		#fertilizer B
+		#client.publish("hydro/dosing_pump_4", "true")
+		#time.sleep(time_dosing_pump_4)
+		print("sleep")
+		#client.publish("hydro/dosing_pump_4", "false")
+		client.publish("hydro/fertilize/telegram", "Successfully fertilized!")
 	else:
-		client.publish("hydro/lamp", "true")
-	time_global_after = time.time()
-	print(time_global - time_global_after)
-	print("lampe")
-	
-def button_water_pump_callback(channel):
-	global time_global
-	global time_global_after
-	time_global = time.time()
-	if (time_global - time_global_after) > -0.1:
 		pass
-	else:
-		client.publish("hydro/water_pump", "true")
-	time_global_after = time.time()
-	print(time_global - time_global_after)
-	print("wasserpumpe")
-	
-def button_air_pump_callback(channel):
-	global time_global
-	global time_global_after
-	time_global = time.time()
-	if (time_global - time_global_after) > -0.1:
-		pass
-	else:
-		client.publish("hydro/air_pump", "true")
-	time_global_after = time.time()
-	print(time_global - time_global_after)
-	print("luftpumpe")
-
-GPIO.add_event_detect(button_water_pump, GPIO.RISING, callback=button_water_pump_callback, bouncetime = 250)
-GPIO.add_event_detect(button_lamp, GPIO.RISING, callback=button_lamp_callback, bouncetime = 250)
-GPIO.add_event_detect(button_air_pump, GPIO.RISING, callback=button_air_pump_callback, bouncetime = 250)
-"""
-
+		
 #Mqtt Standard procedure
 broker_address = "192.168.8.190"
 client = mqtt.Client("Sensors")
@@ -89,6 +66,9 @@ client.on_connect=on_connect
 client.on_message=on_message
 client.connect(broker_address)
 client.loop_start()
+
+client.subscribe("hydro/fertilize")
+
 
 #controller
 pid = PID(1, 0, 0, setpoint=5.7)
@@ -98,36 +78,36 @@ def controller():
 	if control_value > 0.5:
 		print("ph value too low")
 		client.publish("hydro/ph/telegram", "PH value too low")
-		if control_value > 0.5 and control_value < 0.6:
-			client.publish("hydro/dosing_pump_2", True)
+		if control_value >= 0.5 and control_value <= 0.6:
+			client.publish("hydro/dosing_pump_2", "true")
 			time.sleep(4)
-			client.publish("hydro/dosing_pump_2", False)
-		elif control_value > 0.6 and control_value < 0.9:
-			client.publish("hydro/dosing_pump_2", True)
+			client.publish("hydro/dosing_pump_2", "false")
+		elif control_value >= 0.6 and control_value <= 0.9:
+			client.publish("hydro/dosing_pump_2", "true")
 			time.sleep(11)
-			client.publish("hydro/dosing_pump_2", False)
-		elif control_value > 1:
-			client.publish("hydro/dosing_pump_2", True)
+			client.publish("hydro/dosing_pump_2","false")
+		elif control_value >= 1:
+			client.publish("hydro/dosing_pump_2", "true")
 			time.sleep(18)
-			client.publish("hydro/dosing_pump_2", False)
+			client.publish("hydro/dosing_pump_2", "false")
 	if control_value < -0.5:
 		print("ph value too high")
 		client.publish("hydro/ph/telegram", "PH value too high")
-		if control_value > -0.5 and control_value < -0.6:
-			client.publish("hydro/dosing_pump_1", True)
+		if control_value <= -0.5 and control_value >= -0.6:
+			client.publish("hydro/dosing_pump_1", "true")
 			time.sleep(5)
-			client.publish("hydro/dosing_pump_1", False)
-		elif control_value > -0.6 and control_value < -0.9:
-			client.publish("hydro/dosing_pump_1", True)
+			client.publish("hydro/dosing_pump_1", "false")
+		elif control_value <= -0.6 and control_value >= -0.9:
+			client.publish("hydro/dosing_pump_1", "true")
 			time.sleep(16)
-			client.publish("hydro/dosing_pump_1", False)
-		elif control_value > -1:
-			client.publish("hydro/dosing_pump_1", True)
+			client.publish("hydro/dosing_pump_1", "false")
+		elif control_value <= -1:
+			client.publish("hydro/dosing_pump_1", "true")
 			time.sleep(25)
-			client.publish("hydro/dosing_pump_1", False)
+			client.publish("hydro/dosing_pump_1", "false")
 	print(control_value)
 	
-schedule.every(45).minutes.do(controller)
+schedule.every(50).minutes.do(controller)
 
 while True:
 	#measure ph and ec from ph_ec_helper module
