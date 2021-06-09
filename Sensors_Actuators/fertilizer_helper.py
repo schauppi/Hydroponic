@@ -14,12 +14,12 @@ dosing_pump_3_30_ml = 39
 dosing_pump_4_30_ml = 41
 
 def fertilize(water_level):
-	
+	water_level = round(water_level)
 	#calculate fert amount
 	amount_fert = (round(water_level / dilution, 3)) * 100
 	#calculate tpump time
 	time_dosing_pump_3 = (amount_fert / 3) * dosing_pump_3_30_ml
 	time_dosing_pump_4 = (amount_fert / 3) * dosing_pump_4_30_ml
-	
+
 	return time_dosing_pump_3, time_dosing_pump_4
 

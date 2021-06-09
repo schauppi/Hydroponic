@@ -4,6 +4,7 @@ import time
 def get_devices():
     device = AtlasI2C()
     device_address_list = device.list_i2c_devices()
+    del device_address_list[0]
     device_list = []
     for i in device_address_list:
 		device.set_i2c_address(i)
